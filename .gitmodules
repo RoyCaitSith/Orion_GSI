@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 [submodule "ufs-weather-model"]
     path = sorc/hafs_forecast.fd
     url = https://github.com/RoyCaitSith/Orion_ufs-weather-model.git
@@ -24,4 +22,3 @@
     path = sorc/hafs_graphics.fd/emc_graphics
     url = https://github.com/RoyCaitSith/Orion_hafs_graphics.git
     branch = support/HAFS
->>>>>>> ff41c0159 (update)
