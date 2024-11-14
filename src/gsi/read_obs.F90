@@ -478,7 +478,8 @@ subroutine read_obs_check (lexist,filename,jsatid,dtype,minuse,nread)
             endif
             nread = nread + 1
          end do rapidscatloop
-       else if(trim(filename) == 'hdobbufr')then
+       else if(trim(filename) == 'tropicsbufr' .or. &
+               trim(filename) == 'hdobbufr')then
          lexist = .false.
          loop_hdob: do while(ireadmg(lnbufr,subset,idate2) >= 0)
             if(trim(subset) == 'NC004015') then
@@ -1441,6 +1442,10 @@ subroutine read_obs(ndata,mype)
                   call read_fl_hdob(nread,npuse,nouse,infile,obstype,lunout,gstime,twind,sis,&
                                     prsl_full,nobs_sub1(1,i))
                   string='READ_FL_HDOB'
+                else if ( index(infile,'tropicsbufr') /=0 ) then
+                  call read_tropics_tq(nread,npuse,nouse,infile,obstype,lunout,gstime,twind,sis,&
+                                       prsl_full,nobs_sub1(1,i))
+                  string='READ_TROPICS_TQ'
                 else if (index(infile,'uprair') /=0)then
                    call read_hdraob(nread,npuse,nouse,infile,obstype,lunout,twind,sis,&
                         prsl_full,hgtl_full,nobs_sub1(1,i),read_rec(i))
