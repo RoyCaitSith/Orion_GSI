@@ -484,6 +484,7 @@ read_diag.f90
 read_fed.f90
 read_files.f90
 read_fl_hdob.f90
+read_tropics_tq.f90
 read_gfs_ozone_for_regional.f90
 read_gmi.f90
 read_goesglm.f90
