@@ -1,9 +1,9 @@
-subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis,&
-                        prsl_full,nobs)
+subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,sis,&
+                           prsl_full,nobs)
 
 !$$$  subprogram documentation block
 !                .      .    .                                       .
-! subprogram:  read_fl_hdob            read obs from hdob bufr file
+! subprogram:  read_tropics_tq         read obs from hdob bufr file
 !   prgmmr: eliu          org: np22                date: 2013-02-05
 !
 ! abstract:  This routine reads high-density flight-level observations and surface data 
@@ -218,7 +218,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
  
 !------------------------------------------------------------------------------------------------
 
-     write(6,*)'READ_FL_HDOB: begin to read flight-level high density data ...'
+     write(6,*)'READ_TROPICS_TQ: begin to read flight-level high density data ...'
 
 !    Initialize parameters
 
@@ -264,7 +264,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
         iecol  =  5 
         errmin = one_tenth ! set lower bound of ob error for surface pressure 
      else 
-        write(6,*) ' illegal obs type in read_fl_hdob '
+        write(6,*) ' illegal obs type in read_tropics_tq '
         call stop2(94)
      end if
      if (perturb_obs .and. luvob) nreal = nreal+2
@@ -296,10 +296,10 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !     end do loopd
 
 !     if (lcount <= 0) then
-!        write(6,*)'READ_FL_HDOB: obs error table not available'
+!        write(6,*)'READ_TROPICS_TQ: obs error table not available'
 !        call stop2(49) 
 !     else
-!        write(6,*)'READ_FL_HDOB: obs errors provided by local file errtable'   
+!        write(6,*)'READ_TROPICS_TQ: obs errors provided by local file errtable'   
 !     endif
 !
 !    Check if the obs type specified in the convinfo is in the fl hdob bufr file 
@@ -321,11 +321,11 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
         end if
      enddo
      if(ntmatch == 0)then  ! Return if not specified in convinfo 
-        write(6,*) ' READ_FL_HDOB: No matching obstype found in obsinfo ',obstype
+        write(6,*) ' READ_TROPICS_TQ: No matching obstype found in obsinfo ',obstype
         return
      else 
         nc = ncsave
-        write(6,*) ' READ_FL_HDOB: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), itype 
+        write(6,*) ' READ_TROPICS_TQ: Processing FL HDOB data : ', ntmatch, nc, ioctype(nc), ictype(nc), itype 
      end if
 
      ncount_ps=0;ncount_q=0;ncount_t=0;ncount_uv=0
@@ -353,7 +353,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
               enddo
            endif
         endif
-        write(6,*)'READ_FL_HDOB: ictype(nc),rmesh,pflag,nlevp,pmesh,nc ',&
+        write(6,*)'READ_TROPICS_TQ: ictype(nc),rmesh,pflag,nlevp,pmesh,nc ',&
                    ioctype(nc),ictype(nc),rmesh,pflag,nlevp,pmesh,nc
      endif
      pmot=nint(pmot_conv(nc))
@@ -380,8 +380,8 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
      end do loop_msg1
      call closbf(lunin)
      close(lunin)
-     write(6,*) 'READ_FL_HDOB: total number of data found in the bufr file ',maxobs,obstype      
-     write(6,*) 'READ_FL_HDOB: time offset is ',toff,' hours'
+     write(6,*) 'READ_TROPICS_TQ: total number of data found in the bufr file ',maxobs,obstype      
+     write(6,*) 'READ_TROPICS_TQ: time offset is ',toff,' hours'
 
 !---------------------------------------------------------------------------------------------------
 
@@ -418,14 +418,16 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !          KNHC   --- Air Force product
 !          KWBC   --- NOAA product
 !          KBIX   --- Air Force backup product
-           call readlc(lunin,obsbul(1,1),bulstr1)
-           call readlc(lunin,obsbul(2,1),bulstr2)
-           obs_region = 'Unknown'
+!          call readlc(lunin,obsbul(1,1),bulstr1)
+!          call readlc(lunin,obsbul(2,1),bulstr2)
+           obsbul(1,1) = 'KWBC'
+           obsbul(2,1) = 'KWBC'
+           obs_region  = 'Unknown'
            if (obsbul(1,1) == 'URNT15') obs_region = 'Atlantic'
            if (obsbul(1,1) == 'URPN15') obs_region = 'East and Central Pacific' 
            if (obsbul(1,1) == 'URPA15') obs_region = 'West Pacific' 
 
-           c_station_id = 'FL_HDOB'
+           c_station_id = 'TROPICS_TQ'
            c_prvstg     = obsbul(2,1) 
            c_sprvstg    = obsbul(1,1) 
 
@@ -472,17 +474,17 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !                 3  both lat/lon abd GA/PS questionable
 
            call ufbint(lunin,obsqcm,2,1,nlv,qcmstr)
-           call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
-           if (nib > 0) then  
-               ibit(1:nib) = ibit(1:nib)-1
-               if (any(ibit(1:nib) > 0)) then
-                  write(6,*) 'READ_FL_HDOB: bad positional data ... toss away'
-                  cycle loop_readsb2
-               endif
-           else ! will keep for further QC check
-              write(6,*) 'READ_FL_HDOB: missing QC info '
-              cycle loop_readsb2
-           endif
+!          call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
+!          if (nib > 0) then  
+!              ibit(1:nib) = ibit(1:nib)-1
+!              if (any(ibit(1:nib) > 0)) then
+!                 write(6,*) 'READ_TROPICS_TQ: bad positional data ... toss away'
+!                 cycle loop_readsb2
+!              endif
+!          else ! will keep for further QC check
+!             write(6,*) 'READ_TROPICS_TQ: missing QC info '
+!             cycle loop_readsb2
+!          endif
 
 !          Read QC mark for HDOB meteorological status
 !          QHDOP: 0  all parameters of nominal accuracy
@@ -494,42 +496,42 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !                 6  FL winds and SFMR questionable
 !                 9  T/Td, FL winds, and SFMR questionable
 
-           call upftbv(lunin,"QHDOM",obsqcm(2,1),mxib,ibit,nib)
-           if (nib > 0) then
-               ibit(1:nib) = ibit(1:nib)-1
-               if (any(ibit(1:nib) == 1)) then   ! for T/Td
-                  t_qm    = 0 
-                  q_qm    = 4 
-               endif
-               if (any(ibit(1:nib) == 2)) then   ! for uv 
-                  uv_qm   = 4 
-               endif
-               if (any(ibit(1:nib) == 3)) then   ! for SFMR data 
-                  wspd_qm = 4 
-               endif
-               if (any(ibit(1:nib) == 4)) then   ! for T/Td and uv
-                  t_qm    = 4 
-                  q_qm    = 4 
-                  uv_qm   = 4 
-               endif
-               if (any(ibit(1:nib) == 5)) then   ! for T/Td and SFMR data
-                  t_qm    = 4 
-                  q_qm    = 4 
-                  wspd_qm = 4 
-               endif
-               if (any(ibit(1:nib) == 6)) then   ! for uv and SFMR data
-                  uv_qm   = 4 
-                  wspd_qm = 4 
-               endif
-               if (any(ibit(1:nib) == 9)) then   ! for T/Td, uv, and SFMR data
-                  t_qm    = 4 
-                  q_qm    = 4 
-                  uv_qm   = 4 
-                  wspd_qm = 4 
-               endif
-           else
-              write(6,*) 'READ_FL_HDOB: missing QC info'
-           endif
+!          call upftbv(lunin,"QHDOM",obsqcm(2,1),mxib,ibit,nib)
+!          if (nib > 0) then
+!              ibit(1:nib) = ibit(1:nib)-1
+!              if (any(ibit(1:nib) == 1)) then   ! for T/Td
+!                 t_qm    = 0 
+!                 q_qm    = 4 
+!              endif
+!              if (any(ibit(1:nib) == 2)) then   ! for uv 
+!                 uv_qm   = 4 
+!              endif
+!              if (any(ibit(1:nib) == 3)) then   ! for SFMR data 
+!                 wspd_qm = 4 
+!              endif
+!              if (any(ibit(1:nib) == 4)) then   ! for T/Td and uv
+!                 t_qm    = 4 
+!                 q_qm    = 4 
+!                 uv_qm   = 4 
+!              endif
+!              if (any(ibit(1:nib) == 5)) then   ! for T/Td and SFMR data
+!                 t_qm    = 4 
+!                 q_qm    = 4 
+!                 wspd_qm = 4 
+!              endif
+!              if (any(ibit(1:nib) == 6)) then   ! for uv and SFMR data
+!                 uv_qm   = 4 
+!                 wspd_qm = 4 
+!              endif
+!              if (any(ibit(1:nib) == 9)) then   ! for T/Td, uv, and SFMR data
+!                 t_qm    = 4 
+!                 q_qm    = 4 
+!                 uv_qm   = 4 
+!                 wspd_qm = 4 
+!              endif
+!          else
+!             write(6,*) 'READ_TROPICS_TQ: missing QC info'
+!          endif
 
            usage = zero                ! will be considered for assimilation
                                        ! subject to further QC in setupt subroutine
@@ -541,7 +543,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 
            if (obsloc(1,1) == missing .or. abs(obsloc(1,1)) >  90.0_r_kind .or. &     
                obsloc(2,1) == missing .or. abs(obsloc(2,1)) > 360.0_r_kind) then 
-               write(6,*) 'READ_FL_HDOB: bad lat/lon values: ', obsloc(1,1),obsloc(2,1)              
+               write(6,*) 'READ_TROPICS_TQ: bad lat/lon values: ', obsloc(1,1),obsloc(2,1)              
                cycle loop_readsb2     
            endif
            if (obsloc(2,1) < 0.0_r_kind) obsloc(2,1) = obsloc(2,1) + 360.0_r_kind
@@ -576,7 +578,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 
            if (obsprs(1,1) >= missing .or. &
                obsprs(1,1) .gt. 110000.0_r_kind .or. obsprs(1,1) .lt. 5000.0_r_kind) then            
-               write(6,*) 'READ_FL_HDOB: bad flight-level pressure [pa] values: ', obsprs(1,1)          
+               write(6,*) 'READ_TROPICS_TQ: bad flight-level pressure [pa] values: ', obsprs(1,1)          
                cycle loop_readsb2     
            endif
            pob_pa = obsprs(1,1)         ! [Pa]
@@ -587,7 +589,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
 !          Read flight-level geopotential height [(m/s)**2] and convert to height [m]       
            call ufbint(lunin,obsg10,1,1,nlv,g10str)
            if (obsg10(1,1) == missing) then                                  
-               write(6,*) 'READ_FL_HDOB: bad flight-level geopotential height [(m/s)**2] values: ', obsg10(1,1)
+               write(6,*) 'READ_TROPICS_TQ: bad flight-level geopotential height [(m/s)**2] values: ', obsg10(1,1)
                cycle loop_readsb2 
            endif    
            gob = obsg10(1,1)/grav  !  convert to height [m]     
@@ -617,7 +619,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
               call ufbint(lunin,obspsf,1,1,nlv,psfstr)
               if (obspsf(1,1) >= missing .or. &
                   obspsf(1,1) .gt. 110000.0_r_kind .or. obspsf(1,1) .lt. 5000.0_r_kind) then                   
-                  write(6,*) 'READ_FL_HDOB: bad surface pressure [pa] values: ', obspsf(1,1)               
+                  write(6,*) 'READ_TROPICS_TQ: bad surface pressure [pa] values: ', obspsf(1,1)               
                   cycle loop_readsb2
               endif
               psob_pa = obspsf(1,1)         ! [Pa]
@@ -642,7 +644,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                           endif
                        enddo
                        if (ncount_ps ==1) then
-                          write(6,*) 'READ_FL_HDOB,WARNING!!psob: cannot find subtype in the error,&
+                          write(6,*) 'READ_TROPICS_TQ,WARNING!!psob: cannot find subtype in the error,&
                                       table,itype,iosub=',itypey,icsubtype(nc)
                           write(6,*) 'read error table at colomn subtype as 0, error table column= ',ierr_ps
                        endif
@@ -724,7 +726,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                           endif
                        enddo
                        if(ncount_t ==1) then
-                          write(6,*) 'READ_FL_HDOB,WARNING!! tob:cannot find subtyep in the error table,&
+                          write(6,*) 'READ_TROPICS_TQ,WARNING!! tob:cannot find subtyep in the error table,&
                                       itype,iosub=',itype,icsubtype(nc) 
                           write(6,*) 'read error table at colomn subtype as 0,error table column=',ierr_t
                        endif
@@ -797,7 +799,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                           endif
                        enddo
                        if( ncount_q ==1 ) then
-                          write(6,*) 'READ_FL_HDOB,WARNING!! qob:cannot find subtyep in the error table,&
+                          write(6,*) 'READ_TROPICS_TQ,WARNING!! qob:cannot find subtyep in the error table,&
                                       itype,iosub=',itype,icsubtype(nc) 
                           write(6,*) 'read error table at colomn subtype as 0,error table column=',ierr_q
                        endif
@@ -866,7 +868,7 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
                           endif
                        enddo
                        if(ncount_uv ==1) then
-                          write(6,*) 'READ_FL_HDOB,WARNING!! uvob:cannot find subtyep in the error table,&
+                          write(6,*) 'READ_TROPICS_TQ,WARNING!! uvob:cannot find subtyep in the error table,&
                                       itype,iosub=',itype,icsubtype(nc) 
                           write(6,*) 'read error table at colomn subtype 0,error table column=',ierr_uv
                        endif
@@ -1228,20 +1230,20 @@ subroutine read_fl_hdob(nread,ndata,nodata,infile,obstype,lunout,gstime,twind,si
      write(lunout) ((cdata_all(k,i),k=1,nreal),i=1,ndata)
      deallocate(cdata_all,rusage,rthin)
 
-     if(diagnostic_reg .and. ntest>0)  write(6,*)'READ_FL_HDOB:  ',&
+     if(diagnostic_reg .and. ntest>0)  write(6,*)'READ_TROPICS_TQ:  ',&
         'ntest,  disterrmax=', ntest,disterrmax
-     if(diagnostic_reg .and. nvtest>0) write(6,*)'READ_FL_HDOB:  ',&
+     if(diagnostic_reg .and. nvtest>0) write(6,*)'READ_TROPICS_TQ:  ',&
         'nvtest,vdisterrmax=',ntest,vdisterrmax
 
      if (ndata == 0) then
-        write(6,*)'READ_FL_HDOB: no data to process',obstype
+        write(6,*)'READ_TROPICS_TQ: no data to process',obstype
      endif
-     write(6,*)'READ_FL_HDOB: nreal=',nreal,obstype
-     write(6,*)'READ_FL_HDOB: ntb,nread,ndata,nodata=',ntb,nread,ndata,nodata
+     write(6,*)'READ_TROPICS_TQ: nreal=',nreal,obstype
+     write(6,*)'READ_TROPICS_TQ: ntb,nread,ndata,nodata=',ntb,nread,ndata,nodata
 
 
 !    End of routine
      return
 
-end subroutine read_fl_hdob
+end subroutine read_tropics_tq
 
