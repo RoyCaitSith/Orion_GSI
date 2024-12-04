@@ -427,7 +427,7 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
            if (obsbul(1,1) == 'URPN15') obs_region = 'East and Central Pacific' 
            if (obsbul(1,1) == 'URPA15') obs_region = 'West Pacific' 
 
-           c_station_id = 'TROPICS_TQ'
+           c_station_id = 'TROPICS'
            c_prvstg     = obsbul(2,1) 
            c_sprvstg    = obsbul(1,1) 
 
