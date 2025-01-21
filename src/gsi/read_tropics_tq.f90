@@ -206,7 +206,7 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
      data sfmrstr  / 'PKSWSP TRRT' /
      data locstr   / 'CLAT CLON' /
      data tmpstr   / 'QMAT TMDB' /
-     data mststr   / 'QMDD TMDP REHU' /
+     data mststr   / 'QMDD SPFH REHU' /
      data wndstr   / 'QMWN WDIR WSPD PKWDSP' /
      data prsstr   / 'PRLC' /
      data psfstr   / '' /        ! nor in the bufr yet
@@ -474,6 +474,7 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
 !                 3  both lat/lon abd GA/PS questionable
 
            call ufbint(lunin,obsqcm,2,1,nlv,qcmstr)
+           call ufbint(lunin,obswnd,4,1,nlv,wndstr)
 !          call upftbv(lunin,"QHDOP",obsqcm(1,1),mxib,ibit,nib)
 !          if (nib > 0) then  
 !              ibit(1:nib) = ibit(1:nib)-1
@@ -578,7 +579,7 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
 
            if (obsprs(1,1) >= missing .or. &
                obsprs(1,1) .gt. 110000.0_r_kind .or. obsprs(1,1) .lt. 5000.0_r_kind) then            
-               write(6,*) 'READ_TROPICS_TQ: bad flight-level pressure [pa] values: ', obsprs(1,1)          
+!               write(6,*) 'READ_TROPICS_TQ: bad flight-level pressure [pa] values: ', obsprs(1,1)          
                cycle loop_readsb2     
            endif
            pob_pa = obsprs(1,1)         ! [Pa]
@@ -680,34 +681,34 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
               call ufbint(lunin,obstmp,2,1,nlv,tmpstr)
               call ufbint(lunin,obsmst,3,1,nlv,mststr)
               tob  = obstmp(2,1)  ! airs temperature [K] 
-              tdob = obsmst(2,1)  ! dew point temperature [K]
+              qob  = obsmst(2,1)  ! specific humidity [kgkg-1]
               rhob = obsmst(3,1)  ! relative humidity (%)
               if (tob >= missing .or. tob <= 170.0_r_kind .or. tob >= 320.0_r_kind) then
                  cycle loop_readsb2
               endif
-              if (tdob >= missing) then
-                 tvflg = one   ! tob is sensible temperature
-                 qob   = bmiss 
-                 rhob  = bmiss 
-                 tob   = obstmp(2,1)
-              else
-                 tvflg = 0     ! tob is virtual temperature temperature
-!                Calculate specific humidity from tob and td
-                 if (rhob >= missing) then  
-!                   Calculate RH [%] since rhob is missing
-                    rhob_calc = exp((one-tob/tdob)*(hvap/rv)/tob) ! e.g. rh=0.98
-                    call fpvsx_ad(tob,es,dummy,dummy,.false.)
-                    qsat = eps*es/(pob_cb-omeps*es)
-                    rhob = rhob_calc   ! calculate RH (%) since rhob is missing
-                    qob  = rhob*qsat
-                 else
-                    call fpvsx_ad(tob,es,dummy,dummy,.false.)
-                    qsat      = eps*es/(pob_cb-omeps*es)
-                    tdob_calc = tob*(one-tob*log(rhob/100))   ! for comparison
-                    qob       = rhob*qsat
-                 endif
-                 tob = tob*(1.0_r_kind+0.61_r_kind*qob)  ! conver t to tv
-              endif
+!              if (tdob >= missing) then
+!                 tvflg = one   ! tob is sensible temperature
+!                 qob   = bmiss 
+!                 rhob  = bmiss 
+!                 tob   = obstmp(2,1)
+!              else
+!                 tvflg = 0     ! tob is virtual temperature temperature
+!!                Calculate specific humidity from tob and td
+!                 if (rhob >= missing) then  
+!!                   Calculate RH [%] since rhob is missing
+!                    rhob_calc = exp((one-tob/tdob)*(hvap/rv)/tob) ! e.g. rh=0.98
+!                    call fpvsx_ad(tob,es,dummy,dummy,.false.)
+!                    qsat = eps*es/(pob_cb-omeps*es)
+!                    rhob = rhob_calc   ! calculate RH (%) since rhob is missing
+!                    qob  = rhob*qsat
+!                 else
+!                    call fpvsx_ad(tob,es,dummy,dummy,.false.)
+!                    qsat      = eps*es/(pob_cb-omeps*es)
+!                    tdob_calc = tob*(one-tob*log(rhob/100))   ! for comparison
+!                    qob       = rhob*qsat
+!                 endif
+!                 tob = tob*(1.0_r_kind+0.61_r_kind*qob)  ! conver t to tv
+!              endif
 !             Get observation error from error table
               if (njqc) then
                  ppb = max(zero,min(pob_mb,r2000))
@@ -760,27 +761,28 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
               call ufbint(lunin,obstmp,2,1,nlv,tmpstr)
               call ufbint(lunin,obsmst,3,1,nlv,mststr)
               tob  = obstmp(2,1)  ! dry airs temperature [K] 
-              tdob = obsmst(2,1)  ! dew point temperature [K] 
-              rhob = obsmst(3,1)  ! relative humidity (%) 
+              qob  = obsmst(2,1)  ! specific humidity [kgkg-1] 
+              rhob = obsmst(3,1)  ! relative humidity (%)
               tdry = tob       
-              if (tob  >= missing .or. tdob >= missing .or. & 
-                  tob  <= 170.0_r_kind .or. tob  >= 320.0_r_kind .or. & 
-                  tdob <= 170.0_r_kind .or. tdob >= 320.0_r_kind) then
+!              if (tob  >= missing .or. tdob >= missing .or. & 
+!                  tob  <= 170.0_r_kind .or. tob  >= 320.0_r_kind .or. & 
+!                  tdob <= 170.0_r_kind .or. tdob >= 320.0_r_kind) then
+              if (tob  >= missing .or. tob  <= 170.0_r_kind .or. tob  >= 320.0_r_kind) then
                  cycle loop_readsb2
               endif
 !             Calculate specific humidity from relative humidity if abailable
-              if (rhob >= missing) then 
-                 rhob_calc = exp((one-tob/tdob)*(hvap/rv)/tob) ! e.g. rh=0.98
-                 call fpvsx_ad(tob,es,dummy,dummy,.false.)
-                 qsat = eps*es/(pob_cb-omeps*es)
-                 rhob = rhob_calc   ! calculate RH (%) since rhob is missing          
-                 qob  = rhob*qsat
-              else
-                 call fpvsx_ad(tob,es,dummy,dummy,.false.)
-                 qsat      = eps*es/(pob_cb-omeps*es)
-                 tdob_calc = tob*(one-tob*log(rhob/100))   ! for comparison
-                 qob       = rhob*qsat
-              endif 
+!              if (rhob >= missing) then 
+!                 rhob_calc = exp((one-tob/tdob)*(hvap/rv)/tob) ! e.g. rh=0.98
+!                 call fpvsx_ad(tob,es,dummy,dummy,.false.)
+!                 qsat = eps*es/(pob_cb-omeps*es)
+!                 rhob = rhob_calc   ! calculate RH (%) since rhob is missing          
+!                 qob  = rhob*qsat
+!              else
+!                 call fpvsx_ad(tob,es,dummy,dummy,.false.)
+!                 qsat      = eps*es/(pob_cb-omeps*es)
+!                 tdob_calc = tob*(one-tob*log(rhob/100))   ! for comparison
+!                 qob       = rhob*qsat
+!              endif 
 !             Get observation error from error table
               if (njqc) then
                  ppb = max(zero,min(pob_mb,r2000))
@@ -1080,7 +1082,7 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
               cdata_all(21,iout)=zz                     ! terrain height at ob location             
               cdata_all(22,iout)=r_prvstg(1,1)          ! provider name
               cdata_all(23,iout)=r_sprvstg(1,1)         ! subprovider name
-              cdata_all(24,iout)=qcm                    ! cat
+              cdata_all(24,iout)=obswnd(4,1)            ! cat
               cdata_all(25,iout)=var_jb                 ! non linear qc
               if(perturb_obs) &
                  cdata_all(26,iout)=ran01dom()*perturb_fact  ! t perturbation             
@@ -1118,7 +1120,7 @@ subroutine read_tropics_tq(nread,ndata,nodata,infile,obstype,lunout,gstime,twind
               cdata_all(19,iout)=zz                     ! terrain height at ob location             
               cdata_all(20,iout)=r_prvstg(1,1)          ! provider name
               cdata_all(21,iout)=r_sprvstg(1,1)         ! subprovider name
-              cdata_all(22,iout)=qcm                    ! cat
+              cdata_all(22,iout)=obswnd(4,1)            ! cat
               cdata_all(26,iout)=var_jb                 ! non linear qc
               if(perturb_obs) &
                  cdata_all(27,iout)=ran01dom()*perturb_fact ! q perturbation         
