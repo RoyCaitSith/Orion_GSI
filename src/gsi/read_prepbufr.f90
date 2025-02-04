@@ -1486,13 +1486,13 @@ subroutine read_prepbufr(nread,ndata,nodata,infile,obstype,lunout,twindin,sis,&
                    del=max(zero,min(del,one))
                    obserr(3,k)=(one-del)*etabl(itypex,k1,2)+del*etabl(itypex,k2,2)
                    obserr(2,k)=(one-del)*etabl(itypex,k1,3)+del*etabl(itypex,k2,3)
-                   obserr(5,k)=(one-del)*etabl(itypex,k1,4)+del*etabl(itypex,k2,4)
+                   !obserr(5,k)=(one-del)*etabl(itypex,k1,4)+del*etabl(itypex,k2,4)
                    obserr(1,k)=(one-del)*etabl(itypex,k1,5)+del*etabl(itypex,k2,5)
                    obserr(7,k)=(one-del)*etabl(itypex,k1,6)+del*etabl(itypex,k2,6)
 
                    obserr(3,k)=max(obserr(3,k),terrmin)
                    obserr(2,k)=max(obserr(2,k),qerrmin)
-                   obserr(5,k)=max(obserr(5,k),werrmin)
+                   !obserr(5,k)=max(obserr(5,k),werrmin)
                    obserr(1,k)=max(obserr(1,k),perrmin)
                    obserr(7,k)=max(obserr(7,k),pwerrmin)
                 enddo
